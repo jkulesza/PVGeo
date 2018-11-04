@@ -1,5 +1,5 @@
 __all__ = [
-    'EarthSource',
+    'OutlineContinents',
     'GlobeSource',
 ]
 
@@ -14,10 +14,11 @@ from .. import _helpers
 from .. import interface
 
 
-class EarthSource(AlgorithmBase):
-    """A simple data source to produce a ``vtkEarthSource``
+class OutlineContinents(AlgorithmBase):
+    """A simple data source to produce a ``vtkEarthSource`` outlining the
+    Earth's continents. This works well with our ``GlobeSource``.
     """
-    __displayname__ = 'Earth Source'
+    __displayname__ = 'Outline Continents'
     __category__ = 'source'
     def __init__(self, radius=6371.0e6):
         AlgorithmBase.__init__(self,
@@ -45,7 +46,13 @@ class EarthSource(AlgorithmBase):
 
 class GlobeSource(AlgorithmBase):
     """Creates a globe/sphere the size of the Earth with texture coordinates
-    already mapped."""
+    already mapped. The globe's center is assumed to be (0,0,0).
+
+    Args:
+        radius (float): the radius to use
+        npar (int): the number of parallels (latitude)
+        nmer (int): the number of meridians (longitude)
+    """
     __displayname__ = 'Globe Source'
     __category__ = 'source'
     def __init__(self, radius=6371.0e6, npar=15, nmer=36, **kwargs):
@@ -91,8 +98,7 @@ class GlobeSource(AlgorithmBase):
         cellConn = Delaunay(pos).simplices.astype(int)
         cells = vtk.vtkCellArray()
         cells.SetNumberOfCells(cellConn.shape[0])
-        cellsMat = np.concatenate((np.ones((cellConn.shape[0], 1), dtype=np.int64)*cellConn.shape[1], cellConn), axis=1).ravel()
-        cells.SetCells(cellConn.shape[0], nps.numpy_to_vtkIdTypeArray(cellsMat, deep=True))
+        cells.SetCells(cellConn.shape[0], interface.convertCellConn(cellConn))
         # Generate output
         output = vtk.vtkPolyData()
         output.SetPoints(points)
@@ -101,7 +107,7 @@ class GlobeSource(AlgorithmBase):
         return output
 
     def RequestData(self, request, inInfo, outInfo):
-        """The pipeline exectures this to generate output"""
+        """The pipeline executes this to generate output"""
         pdo = self.GetOutputData(outInfo, 0)
         globe = self.BuildGlobe()
         pdo.ShallowCopy(globe)

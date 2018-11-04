@@ -133,12 +133,15 @@ class WriteImageDataToSGeMS(WriterBase):
         WriterBase.__init__(self, inputType=inputType, ext='SGeMS')
 
 
-    def PerformWriteOut(self, inputDataObject, filename):
+    def PerformWriteOut(self, inputDataObject, filename, objectName):
         # Get the input data object
         grd = inputDataObject
 
-        # Get grid dimensions
+        # Get grid dimensions and minus one becuase this defines nodes
         nx, ny, nz = grd.GetDimensions()
+        nx -= 1
+        ny -= 1
+        nz -= 1
 
         numArrs = grd.GetCellData().GetNumberOfArrays()
         arrs = []
